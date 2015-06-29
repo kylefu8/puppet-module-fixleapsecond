@@ -7,8 +7,6 @@ class fixleapsecond (
   $use_workaround              = false,
 ) {
 
-  validate_absolute_path($fix_localscratch_path)
-
 # convert stringified booleans for enable_fix
   if is_bool($enable_fix) {
     $enable_fix_real = $enable_fix
@@ -31,17 +29,17 @@ class fixleapsecond (
     case "${::osfamily}-${::lsbmajdistrelease}" {
       'Suse-10', 'Suse-11': {
         exec { 'backup_sysconfig_ntp':
-	  command => 'cp /etc/sysconfig/ntpd /etc/sysconfig/ntpd.ori',
+          command => 'cp /etc/sysconfig/ntpd /etc/sysconfig/ntpd.ori',
           path    => '/bin:/usr/bin',
-	  unless  => 'test -f /etc/sysconfig/ntpd.ori',
-	}
+          unless  => 'test -f /etc/sysconfig/ntpd.ori',
+        }
       }
       'RedHat-5', 'RedHat-6':{
         exec { 'backup_sysconfig_ntp':
           command => 'cp /etc/sysconfig/ntpd /etc/sysconfig/ntpd.ori',
           path    => '/bin:/usr/bin',
           unless  => 'test -f /etc/sysconfig/ntpd.ori',
-	}
+        }
       }
       default: {
         fail('backup_sysconfig_ntp is only supported on Suse 10&11, RHEL 5&6.')
@@ -53,18 +51,18 @@ class fixleapsecond (
       case "${::osfamily}-${::lsbmajdistrelease}" {
         'Suse-10', 'Suse-11': {
           exec { 'use_workaround':
-            command => 'sed -i \'s/="/="-x /\' /etc/sysconfig/ntpd; /sbin/service ntp restart',
+            command => 'sed -i \'s/="/="-x /\' /etc/sysconfig/ntpd; /sbin/service ntp stop; /usr/sbin/ntptime -s 0 -f 0; /sbin/service ntpd restart',
             path    => '/bin:/usr/bin',
             unless  => 'test -f /etc/sysconfig/ntpd && grep "\-x" /etc/sysconfig/ntpd',
           }
         }
-	'RedHat-5', 'RedHat-6':{
+        'RedHat-5', 'RedHat-6':{
           exec { 'use_workaround':
-	    command => 'sed -i \'s/="/="-x /\' /etc/sysconfig/ntpd; /sbin/service ntp restart',
+            command => 'sed -i \'s/OPTIONS="/OPTIONS="-x /\' /etc/sysconfig/ntpd; /sbin/service ntp stop; /usr/sbin/ntptime -s 0 -f 0; /sbin/service ntpd restart',
             path    => '/bin:/usr/bin',
             unless  => 'test -f /etc/sysconfig/ntpd && grep "\-x" /etc/sysconfig/ntpd',
-	  }
-	}
+          }
+        }
         default: {
           fail('use_workaround is only supported on Suse 10&11, RHEL 5&6.')
         }
@@ -81,7 +79,7 @@ class fixleapsecond (
         }
         'RedHat-5', 'RedHat-6':{
           exec { 'restore_workaround':
-            command => 'sed -i \'s/="-x /="/\' /etc/sysconfig/ntpd; /sbin/service ntp restart',
+            command => 'sed -i \'s/OPTIONS="-x /OPTIONS="/\' /etc/sysconfig/ntpd; /sbin/service ntp restart',
             path    => '/bin:/usr/bin',
             onlyif  => 'test -f /etc/sysconfig/ntpd.ori && test -f /etc/sysconfig/ntpd.ori && grep "\-x " /etc/sysconfig/ntpd',
           }
