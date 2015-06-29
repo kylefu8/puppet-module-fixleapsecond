@@ -29,16 +29,16 @@ class fixleapsecond (
     case "${::osfamily}-${::lsbmajdistrelease}" {
       'Suse-10', 'Suse-11': {
         exec { 'backup_sysconfig_ntp':
-          command => 'cp /etc/sysconfig/ntpd /etc/sysconfig/ntpd.ori',
+          command => 'cp /etc/sysconfig/ntp /etc/sysconfig/ntp_puppet_ori',
           path    => '/bin:/usr/bin',
-          unless  => 'test -f /etc/sysconfig/ntpd.ori',
+          unless  => 'test -f /etc/sysconfig/ntp_puppet_ori',
         }
       }
       'RedHat-5', 'RedHat-6':{
         exec { 'backup_sysconfig_ntp':
-          command => 'cp /etc/sysconfig/ntpd /etc/sysconfig/ntpd.ori',
+          command => 'cp /etc/sysconfig/ntpd /etc/sysconfig/ntpd_puppet_ori',
           path    => '/bin:/usr/bin',
-          unless  => 'test -f /etc/sysconfig/ntpd.ori',
+          unless  => 'test -f /etc/sysconfig/ntpd_puppet_ori',
         }
       }
       default: {
@@ -51,14 +51,14 @@ class fixleapsecond (
       case "${::osfamily}-${::lsbmajdistrelease}" {
         'Suse-10', 'Suse-11': {
           exec { 'use_workaround':
-            command => 'sed -i \'s/="/="-x /\' /etc/sysconfig/ntpd; /sbin/service ntp stop; /usr/sbin/ntptime -s 0 -f 0; /sbin/service ntpd restart',
+            command => 'sed -i \'s/NTPD_OPTIONS="/NTPD_OPTIONS="-x /\' /etc/sysconfig/ntp; /sbin/service ntp restart',
             path    => '/bin:/usr/bin',
-            unless  => 'test -f /etc/sysconfig/ntpd && grep "\-x" /etc/sysconfig/ntpd',
+            unless  => 'test -f /etc/sysconfig/ntp && grep "\-x" /etc/sysconfig/ntp',
           }
         }
         'RedHat-5', 'RedHat-6':{
           exec { 'use_workaround':
-            command => 'sed -i \'s/OPTIONS="/OPTIONS="-x /\' /etc/sysconfig/ntpd; /sbin/service ntp stop; /usr/sbin/ntptime -s 0 -f 0; /sbin/service ntpd restart',
+            command => 'sed -i \'s/OPTIONS="/OPTIONS="-x /\' /etc/sysconfig/ntpd; /sbin/service ntpd stop; /usr/sbin/ntptime -s 0 -f 0; /sbin/service ntpd start',
             path    => '/bin:/usr/bin',
             unless  => 'test -f /etc/sysconfig/ntpd && grep "\-x" /etc/sysconfig/ntpd',
           }
@@ -72,16 +72,16 @@ class fixleapsecond (
       case "${::osfamily}-${::lsbmajdistrelease}" {
         'Suse-10', 'Suse-11': {
           exec { 'restore_workaround':
-            command => 'sed -i \'s/="-x /="/\' /etc/sysconfig/ntpd; /sbin/service ntp restart',
+            command => 'sed -i \'s/NTPD_OPTIONS="-x /NTPD_OPTIONS="/\' /etc/sysconfig/ntp; /sbin/service ntp restart',
             path    => '/bin:/usr/bin',
-            unless  => 'test -f /etc/sysconfig/ntpd.ori && test -f /etc/sysconfig/ntpd.ori && grep "\-x " /etc/sysconfig/ntpd',
+            onlyif  => 'test -f /etc/sysconfig/ntp && test -f /etc/sysconfig/ntp_puppet_ori && grep "\-x " /etc/sysconfig/ntp',
           }
         }
         'RedHat-5', 'RedHat-6':{
           exec { 'restore_workaround':
-            command => 'sed -i \'s/OPTIONS="-x /OPTIONS="/\' /etc/sysconfig/ntpd; /sbin/service ntp restart',
+            command => 'sed -i \'s/OPTIONS="-x /OPTIONS="/\' /etc/sysconfig/ntpd; /sbin/service ntpd restart',
             path    => '/bin:/usr/bin',
-            onlyif  => 'test -f /etc/sysconfig/ntpd.ori && test -f /etc/sysconfig/ntpd.ori && grep "\-x " /etc/sysconfig/ntpd',
+            onlyif  => 'test -f /etc/sysconfig/ntpd && test -f /etc/sysconfig/ntpd_puppet_ori && grep "\-x " /etc/sysconfig/ntpd',
           }
         }
         default: {
